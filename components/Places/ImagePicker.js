@@ -8,14 +8,20 @@ import {
 
 import { Colors } from "../../constants/colors";
 
-const ImagePicker = () => {
+import OutlinedButton from "../UI/OutlinedButton";
+
+const ImagePicker = ({ onTakeImage }) => {
   const [pickedImage, setPickedImage] = useState();
   const [cameraPermissionInformation, requestPermission] =
     useCameraPermissions();
 
   const verifyPermissions = async () => {
-    if (cameraPermissionInformation.status === PermissionStatus.UNDETERMIND) {
+    if (
+      cameraPermissionInformation.status === PermissionStatus.UNDETERMIND ||
+      cameraPermissionInformation.status === PermissionStatus.DENIED
+    ) {
       const permissionResponse = await requestPermission();
+      permissionResponse.canAskAgain = true;
 
       return permissionResponse.granted;
     }
@@ -26,7 +32,12 @@ const ImagePicker = () => {
         "You need to grant camera permissions to use this app"
       );
 
-      return false;
+      const permissionResponse = await requestPermission();
+      console.log(permissionResponse, "new");
+
+      return permissionResponse.granted;
+
+      // return false;
     }
 
     return true;
@@ -44,7 +55,8 @@ const ImagePicker = () => {
       quality: 0.5,
     });
 
-    setPickedImage(image.uri);
+    setPickedImage(image.assets[0].uri);
+    onTakeImage(image.assets[0].uri);
 
     console.log(image);
   };
@@ -58,7 +70,9 @@ const ImagePicker = () => {
     <>
       <View>
         <View style={styles.imagePreview}>{imagePreview}</View>
-        <Button title="Take Image" onPress={takeImageHandler} />
+        <OutlinedButton icon={"camera"} onPress={takeImageHandler}>
+          Take Image
+        </OutlinedButton>
       </View>
     </>
   );
@@ -75,6 +89,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: Colors.primary100,
     borderRadius: 4,
+    overflow: "hidden",
   },
   image: {
     width: "100%",
