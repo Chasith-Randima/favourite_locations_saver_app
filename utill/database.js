@@ -8,7 +8,7 @@ export const init = () => {
     database.transaction((tx) => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS places (
-                    id INTGER PRIMARY KEY,
+                    id INTEGER PRIMARY KEY NOT NULL,
                     title TEXT NOT NULL,
                     imageUri TEXT NOT NULL,
                     address TEXT NOT NULL,
@@ -30,13 +30,13 @@ export const init = () => {
 };
 
 export const insertPlace = (place) => {
-  console.log(place[0]);
+  // console.log(place[0]);
   const promise = new Promise((resolve, reject) => {
     database.transaction((tx) => {
       tx.executeSql(
-        `INSERT INTO places (id,title,imageUri,address,lat,lng) VALUES (?,?,?,?,?,?)`,
+        `INSERT INTO places (title,imageUri,address,lat,lng) VALUES (?,?,?,?,?)`,
         [
-          place.id,
+          // place.id,
           place.title,
           place.imageUri,
           place.address,
@@ -53,6 +53,7 @@ export const insertPlace = (place) => {
       );
     });
   });
+  return promise;
 };
 
 export const fetchPlaces = () => {
@@ -91,4 +92,50 @@ export const fetchPlaces = () => {
       );
     });
   });
+  return promise;
+};
+
+export const fetchPlaceDetails = (id) => {
+  const promise = new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        "SELECT * FROM places WHERE id = ?",
+        [],
+        (_, result) => {
+          const dbPlace = result.rows._array[0];
+          const place = new Place(
+            dbPlace.title,
+            dbPlace.imageUri,
+            { lat: dbPlace.lat, lng: dbPlace.lng, address: dbPlace.address },
+            dbPlace.id
+          );
+          console.log(result);
+          resolve(place);
+        },
+        (_, error) => {
+          reject(error);
+        }
+      );
+    });
+  });
+  return promise;
+};
+
+export const dropTable = () => {
+  const promise = new Promise((resolve, reject) => {
+    database.transaction((tx) => {
+      tx.executeSql(
+        `DROP TABLE places`,
+        [],
+        () => {
+          resolve();
+        },
+        (_, error) => {
+          reject(error);
+        }
+      );
+    });
+  });
+
+  return promise;
 };
